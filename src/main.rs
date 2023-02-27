@@ -6,14 +6,7 @@ const SIZE: u16 = 40;
 async fn main() {
     let mut board = [false; (SIZE * SIZE) as usize];
 
-    // board[0] = true;
-    // board[21] = true;
-    // board[42] = true;
-    // board[63] = true;
-    // board[84] = true;
-    board[3] = true;
-    board[23] = true;
-    board[43] = true;
+    set_gosper_glider_gun(&mut board);
 
 
     loop {
@@ -115,4 +108,62 @@ pub fn count_neighbours(board: &[bool], row: u16, col: u16) -> u8 {
     count
 }
 
+// set gosper's glider gun
+fn set_gosper_glider_gun(board: &mut [bool; (SIZE * SIZE) as usize]) {
+    let pulsar = "\
+    ..*.*....*.*..
+    .............
+    *....*..*....*
+    *....*..*....*
+    *....*..*....*
+    ..*.*....*.*..
+    .............
+    ..*.*....*.*..
+    *....*..*....*
+    *....*..*....*
+    *....*..*....*
+    .............
+    ..*.*....*.*..
+";
 
+let penta_decathlon = "\
+    ..........
+    ......*...
+    ****..****
+    ......*...
+    ..........
+";
+
+     let glider_gun = "\
+        ........................#............
+        ......................#.#............
+        ............##......##............##..
+        ...........#...#....##............##..
+        ##........#.....#...##...............
+        ##........#...#.##....#.#............
+        ..........#.....#.......#............
+        ...........#...#.....................
+        ............##.......................
+    ";
+    
+    let mut row = 0;
+    let mut col = 0;
+    for ch in pulsar.chars() {
+        match ch {
+            '.' => col += 1,
+            '*' |
+            '#' => {
+                let index = row * SIZE + col;
+                board[index as usize] = true;
+                col += 1;
+            },
+            '\n' => {
+                row += 1;
+                col = 0;
+            },
+            _ => (),
+        }
+    }
+
+
+}
