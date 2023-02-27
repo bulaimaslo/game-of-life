@@ -1,45 +1,118 @@
-use macroquad::prelude::*;
+use macroquad::prelude::{coroutines::wait_seconds, *};
 
-const SIZE: u16 = 20;
+const SIZE: u16 = 40;
 
 #[macroquad::main("GameOfLife")]
 async fn main() {
     let mut board = [false; (SIZE * SIZE) as usize];
 
-    board[0] = true;
-    board[21] = true;
-    board[42] = true;
-    board[63] = true;
-    board[84] = true;
+    // board[0] = true;
+    // board[21] = true;
+    // board[42] = true;
+    // board[63] = true;
+    // board[84] = true;
+    board[3] = true;
+    board[23] = true;
+    board[43] = true;
+
 
     loop {
-        clear_background(RED);
+        clear_background(WHITE);
 
         for i in 0..SIZE * SIZE {
             let row = i / SIZE;
             let col = i % SIZE;
+            let color = if board[i as usize] { BLACK } else { WHITE };
 
             draw_rectangle(
                 screen_width() / SIZE as f32 * col as f32,
                 screen_height() / SIZE as f32 * row as f32,
                 screen_width() / SIZE as f32,
                 screen_height() / SIZE as f32,
-                if board[i as usize] { BLACK } else { WHITE },
+                color,
             );
         }
+
+        board = evaluate_next_board(&board);
 
         if is_key_down(KeyCode::Space) {
             break;
         }
 
-        next_frame().await
+        wait_seconds(time_scale()).await;
+        next_frame().await;
     }
 }
 
-fn get_cell_state(board: &[bool], row: u16, col: u16) -> bool {
+fn time_scale() -> f32 {
+    if is_key_down(KeyCode::Q) {
+        0.1
+    } else if is_key_down(KeyCode::W) {
+        0.5
+    } else if is_key_down(KeyCode::E) {
+        1.0
+    } else if is_key_down(KeyCode::R) {
+        2.0
+    } else if is_key_down(KeyCode::T) {
+        5.0
+    } else if is_key_down(KeyCode::Y) {
+        10.0
+    } else {
+        0.0
+    }
+}
+
+pub fn evaluate_next_board(board: &[bool]) -> [bool; (SIZE * SIZE) as usize] {
+    let mut next_board = [false; (SIZE * SIZE) as usize];
+
+    for i in 0..SIZE * SIZE {
+        let row = i / SIZE;
+        let col = i % SIZE;
+
+        next_board[i as usize] = will_cell_live(board, row, col);
+    }
+
+    next_board
+}
+
+pub fn will_cell_live(board: &[bool], row: u16, col: u16) -> bool {
+    let neighbours = count_neighbours(board, row, col);
+
+    if get_cell_state(board, row, col) {
+        neighbours == 2 || neighbours == 3
+    } else {
+        neighbours == 3
+    }
+}
+
+pub fn get_cell_state(board: &[bool], row: u16, col: u16) -> bool {
     if col >= SIZE || row >= SIZE {
         panic!("Out of bounds");
     }
 
     board[(row * SIZE + col) as usize]
 }
+
+pub fn count_neighbours(board: &[bool], row: u16, col: u16) -> u8 {
+    let mut count = 0;
+
+    for i in 0..3 {
+        for j in 0..3 {
+            if i == 1 && j == 1 {
+                continue;
+            }
+
+            if row + i >= SIZE + 1 || col + j >= SIZE + 1 || row + i < 1 || col + j < 1 {
+                continue;
+            } else {
+                if get_cell_state(board, row + i - 1, col + j - 1) {
+                    count += 1;
+                }
+            }
+        }
+    }
+
+    count
+}
+
+
